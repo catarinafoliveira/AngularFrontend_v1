@@ -3,6 +3,7 @@ import { Person } from '../thisModels/person';
 import { PersonService } from '../thisServices/person.service';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from '../thisServices/message.service';
+import { DriverService } from '../thisServices/driver.service';
 declare var window: any;
 
 @Component({
@@ -27,7 +28,8 @@ export class PersonComponent implements OnInit{
   
   constructor(
     private personService: PersonService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private driverService: DriverService
   ){}
   
   getPersons(): void{
@@ -73,24 +75,46 @@ export class PersonComponent implements OnInit{
   
   confirmAdd(): void {
     this.addPersonModal.hide();
-    this.personService.createPerson(this.newPerson).subscribe({
-      next: () => {
-        this.messageService.sendMessage({
-          text: 'Person created successfully.',
-          type: 'alert alert-success'
-        });
-        this.newPerson = this.reset();
-        this.showEditForm = false;
-        this.showAddForm = false;
-        this.getPersons();
-      },
-      error: (err) => {
-        this.messageService.sendMessage({
-          text: 'Error creating person: ' + err.error.error,
-          type: 'alert alert-danger'
-        });
-      }
-    });
+    if(this.isDriver){
+      this.driverService.createDriver(this.newPerson).subscribe({
+        next: () => {
+          this.messageService.sendMessage({
+            text: 'Driver created successfully.',
+            type: 'alert alert-success'
+          });
+          this.newPerson = this.reset();
+          this.showEditForm = false;
+          this.showAddForm = false;
+          this.getPersons();
+        },
+        error: (err) => {
+          this.messageService.sendMessage({
+            text: 'Error creating driver: ' + err.error.error,
+            type: 'alert alert-danger'
+          });
+        }
+      });
+    } else {
+      this.personService.createPerson(this.newPerson).subscribe({
+        next: () => {
+          this.messageService.sendMessage({
+            text: 'Person created successfully.',
+            type: 'alert alert-success'
+          });
+          this.newPerson = this.reset();
+          this.showEditForm = false;
+          this.showAddForm = false;
+          this.isDriver = false;
+          this.getPersons();
+        },
+        error: (err) => {
+          this.messageService.sendMessage({
+            text: 'Error creating person: ' + err.error.error,
+            type: 'alert alert-danger'
+          });
+        }
+      });
+    }
   }
   
   toggleEdit(person: Person) {
@@ -132,7 +156,7 @@ export class PersonComponent implements OnInit{
     this.selectedPerson = { ...person }; 
     this.deletePersonModal.show();
   }
-
+  
   confirmDeleteModal(): void {
     if(this.confirmationIdCard===this.selectedPerson.idCard){
       this.confirmDelete(this.selectedPerson);
